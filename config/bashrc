@@ -281,6 +281,16 @@ function xscreensaver-disable() {
     xscreensaver-command -restart
 }
 
+function suspend() {
+    (
+        sleep 10
+        sudo dbus-send --session --dest=org.gnome.PowerManager \
+                       --type=method_call --print-reply --reply-timeout=2000 \
+                       /org/gnome/PowerManager org.gnome.PowerManager.Hibernate
+    ) &
+    logout
+}
+
 function settitle() {
     echo -n $'\033']0\;$@$'\007'
 }
