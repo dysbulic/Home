@@ -6,21 +6,20 @@ if [ "$PS1" ]; then
     PS1='\n\u@\h\[\033[1;35m\]:\[\033[0m\]\w\[\033[1;33m\]\$\[\033[0m\] '
 fi
 
-# if on the accre cluster, log into the head
-if [[ "${HOSTNAME#*.}" == "vampire" && "${HOSTNAME%.*}" != "vmpsched" ]]; then
-    ssh vmpsched
-    logout
-fi
+# If the default debian config is available, load it
+[ -z "$SYSCONFIG" ] && SYSCONFIG='.../linux/distro/ubuntu/shell/config/bash'
+[ -e "$SYSCONFIG" ] && source "$SYSCONFIG"
 
 # Mistype: 8/12/2009
 alias edit=emacs
 
 export EDITOR="emacs -nw"
+
 export RSYNC_RSH=ssh
 export CVS_RSH=ssh
+
 [ -d ~/bin ] && export PATH=~/bin:$PATH
 [ -d ~/bin/sdcc/bin/ ] && export PATH=$PATH:~/bin/sdcc/bin/
-export FOP_HOME=$(echo ~/bureau_home/fop-0.20.5)
 
 export LANG="en_US.UTF-8"
 export LC_ALL=$LANG
@@ -29,6 +28,9 @@ export LC_ALL=$LANG
 #function setactive() { termcolor('black'); }
 #function inactive() { termcolor('grey'); }
 #function termcolor() {}
+
+export user="wjh"
+export REMOTE="wjholcomb@madstones.com"
 
 # Push merges to webserver based on config at:
 # http://hoenir.himinbi.org/2010/01/14/putting-sites-in-git/
@@ -39,6 +41,14 @@ function publish() {
     [ -z "$remote" ] && { echo "Error: No git remote found"; return; }
     echo "Publishing $branch to $remote"
     git push $remote "$branch:refs/remotes/$(hostname -s)/$branch"
+}
+
+function tx() {
+    ( 
+        cd ~/tip
+        git commit -m checkpoint .
+        git submodule foreach git commit -m checkpoint . \|\| true
+    )
 }
 
 # Create git repository and mirror to webserver
@@ -57,6 +67,14 @@ function addtoserver() {
     git remote add webserver "ssh://wjholcomb@madstones.com/~/$remotedir/"
 }
 
+function pub() {
+    (
+        cd ~/tip
+        git submodule foreach git push origin master \|\| true
+        git push origin master
+    )
+}
+
 function dump-home-to-media() {
     DIR=/media/home/
     # echo "Resource: '$DIR' not available" && exit -1 || [ -e "$DIR" ]
@@ -67,6 +85,78 @@ function dump-home-to-media() {
                --archive --compress $ARGS \
                --exclude=?*~ --exclude=\".\#*\" --exclude=\"\#*\" \
              /home /media/
+}
+
+# Setup remote login for GIT
+function setupLogin {
+    KEYDIR=~/"personal/keys/$REMOTE"; [ -e "$KEYDIR" ] || mkdir --parents "$KEYDIR"
+    for KEY in "$KEYDIR"/*; do
+        if [ -e "$KEY" ]; then  # Loops even with no matches
+            echo "Testing: $KEY: "
+            ssh -o PasswordAuthentication=no -i "$KEY" $REMOTE "exit 0" && break || echo "  Fail"
+        fi
+    done
+    if [ ! -e "$KEY" ]; then
+        echo "Generating ${KEYLENGTH:=3096}-bit key:"
+        USER=$(whoami)  ; echo "   User: ${user:=USER}"
+        PASSWORD=       ; echo "   Pass: ${PASSWORD:=00000}"
+        unset PASSWORD;
+        HOST=$(hostname); echo "   Host: $host"
+        timestamp=$(date +'%Y-%m-%d@%H:%m:%S'); echo "   Time: $timestamp" 
+        Key="$KEYDIR/$timestamp.rsa key"  ; echo "   Out: $KEY(.pub)?"
+        
+        if [ -e "$KEY" ]; then
+            backup="$KEYDIR/"$(tempfile --prefix 'bak: ' --suffix " ${KEY##*/}")
+            mv -v "$KEY" "$backup"
+        fi
+        if [ -e "$KEY.pub" ]; then
+            backup="$KEYDIR/"$(tempfile --prefix 'bak: ' --suffix " ${KEY##*/}.pub")
+            mv -v "$KEY.pub" "$backup"
+        fi
+        rm -fv "$KEY" "$KEY.pub"
+
+        ssh-keygen -t rsa -b $KEYLENGTH -C "$USER@$HOST:$KEY" -f "$KEY" -P "$PASSWORD" \
+            | tee "$KEY.out.utf-8" $OUTPUT
+        REMOTE_KEYS=.ssh/authorized_keys
+        echo "Appending $KEY to $REMOTE:$REMOTE_KEYS" && \
+            cat "$KEY.pub" | tee - | ssh $REMOTE "cat >> '$REMOTE_KEYS'"
+
+    # Add tipspace make script to add git permissions and drop full access
+        echo "   Bootstrap: ${BOOTSTRAP:=.../sys/lib/tip/drop/permission/ssh/bash}"
+        [ -e "${BOOTSTRAP}" ] && \
+            ssh -i "$KEY" $REMOTE "mkdir --parents ${BOOTSTRAP%/*}" && \
+            scp -i "$KEY" -r "${BOOTSTRAP}" "$REMOTE:${BOOTSTRAP%/*}" && \
+            ssh -i "$KEY" $REMOTE "${BOOTSTRAP##*/} '${BOOTSTRAP}'"
+    fi
+}
+
+function dumppub() {
+    # Problems with git on remote end
+    #filename="/tmp/wjh - $(date +'%Y-%m-%d@%H:%m') - public.git bundle"
+    #git bundle create "$filename" master
+    resource="public"
+    timestamp=$(date +'%Y-%m-%d@%H:%m:%S')
+    timestamp="2010-01-05@12:01"
+    filename="/tmp/$user - $timestamp - $resource.tar.bzip2"
+    echo "Dumping: ~/$resource/ to: $filename"
+    pushd ~ > /dev/null
+    [ ! -e "$filename" ] && tar -cjvf "$filename" "$resource"
+    # If the file exists and isn't on the server yet, copy it
+    setupLogin # Sets $KEY
+    #echo ssh -i "$KEY" "$REMOTE" "test -e '${filename##*/}' \|\| echo 'f'"
+    OUTDIR="dump/$resource/$timestamp"
+    [ -z $(ssh -i "$KEY" "$REMOTE" "test -e '$OUTDIR' && echo 't'") ] && \
+        ssh -i "$KEY" "$REMOTE" "mkdir --parents '$OUTDIR'"
+    REMOTE_FILE="dump/${filename##*/}"
+    [ -e "$filename" ] && \
+        [ -z $(ssh -i "$KEY" "$REMOTE" "test -e '$REMOTE_FILE' && echo 't'") ] && \
+        echo "Copying $filename to $REMOTE:$REMOTE_FILE" && \
+        scp -i "$KEY" "$filename" "$REMOTE:dump/"
+    [ -z $(ssh -i "$KEY" "$REMOTE" "test -e '$REMOTE_FILE' && echo 't'") ] || \
+        echo "Extracting $REMOTE_FILE to $REMOTE:$OUTDIR" && \
+        ssh -i "$KEY" "$REMOTE" "cd '$OUTDIR' && cat ~/'$REMOTE_FILE' | tar -xj && \
+                                 cd - && ln -s '$OUTDIR/$resource'"
+    popd > /dev/null
 }
 
 # To remove language selection menus from windows in Solaris
@@ -159,11 +249,12 @@ export JAVA_HOME=${JAVACMD%/*/*}
 
 alias pauseamarok="dcop --user $USER amarok player playPause"
 
+[ ! -z "$INSTALL" ] && sudo aptitude install klipper
 # Allows cutting and pasting from the command line
-# Usage: echo "test" | klip
-#        klip "test"
-#        klip # displays the clipboard's contents
-function klip() {
+# Usage: echo "test" | clip
+#        clip "test"
+#        clip # displays the clipboard's contents
+function clip() {
     ps ax | sed 's/^ *[^ ]\+ \+[^ ]\+ \+[^ ]\+ \+[^ ]\+ \+//' | grep -qe '^klipper' || klipper
     if [[ $# -eq 0 ]]; then
         # I don't know how to do nonblocking IO
@@ -274,14 +365,14 @@ XSLTTRANS="$WEBSITE_DIR/himinbi.org/odin/jars/XSLTTransformer.jar"
 [ -r "$XSLTTRANS" ] && which xsltproc > /dev/null 2>&1 || alias xsltproc="java -jar $XSLTTRANS"
 
 alias c="ssh wjholcomb@himinbi.org"
-alias cs="ssh will@stderr.org"
-alias ch="ssh will@honors.tntech.edu"
-alias ch="ssh will@ebene.madstones.com"
-alias ch="ssh will@ebene.dynalias.net"
-alias cmad="ssh wholcomb@madstones.com"
-alias csf="ssh -t wjholcomb,ideapool@shell.sourceforge.net create"
-alias cc="ssh holcomwj@vmplogin.accre.vanderbilt.edu"
-alias clab="ssh holcomwj@hmtcomp-7.vuse.vanderbilt.edu"
+alias c="ssh wjholcomb@madstones.com"
+alias connect_stderr="ssh will@stderr.org"
+alias connect_honors="ssh will@honors.tntech.edu"
+alias connect_home="ssh will@loki.himinbi.org"
+alias connect_laptop="ssh will@fenrir.himinbi.org"
+alias connect_sf="ssh -t wjholcomb,ideapool@shell.sourceforge.net create"
+alias connect_vandy_cluster="ssh holcomwj@vmplogin.accre.vanderbilt.edu"
+alias connect_vandy_lab="ssh holcomwj@hmtcomp-7.vuse.vanderbilt.edu"
 
 alias monitorsleep="sleep 1 && xset dpms force off"
 alias rm="rm -i"
@@ -331,7 +422,7 @@ if [ ! "${BASH_VERSINFO[5]/solaris/}" != "${BASH_VERSINFO[5]}" ]; then # not in 
     alias emacs="emacs -nw"
 fi
 
-[ -r "$WEBSITE_DIR/himinbi.org/odin/config/muttrc" ] && alias mutt="mutt -F \"$WEBSITE_DIR/himinbi.org/odin/config/muttrc\""
+[ -r '~/config/muttrc' ] && alias mutt="mutt -F '~/config/muttrc'"
 
 [ -e /usr/local/java/lib/ant/bin/ant ] && alias ant="/usr/local/java/lib/ant/bin/ant"
 [ -e /Developer/Java/Ant/bin/ant ] && alias ant="/Developer/Java/Ant/bin/ant"
