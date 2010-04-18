@@ -282,7 +282,8 @@ function xscreensaver-disable() {
 }
 
 function suspend() {
-    sudo "sleep 30 \\&\\& echo -n S3 >/sys/power/state"
+    ( sudo sleep 30 &&  sudo echo -n S3 >/sys/power/state ) &
+    echo "Suspending in 30 seconds"
 }
 
 function settitle() {
