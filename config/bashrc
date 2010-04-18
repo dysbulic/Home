@@ -282,13 +282,7 @@ function xscreensaver-disable() {
 }
 
 function suspend() {
-    (
-        sleep 10
-        sudo dbus-send --session --dest=org.gnome.PowerManager \
-                       --type=method_call --print-reply --reply-timeout=2000 \
-                       /org/gnome/PowerManager org.gnome.PowerManager.Hibernate
-    ) &
-    logout
+    sudo sleep 30 \&\& echo -n S3 >/sys/power/state
 }
 
 function settitle() {
