@@ -75,6 +75,14 @@ function pub() {
     )
 }
 
+function sub() {
+    (
+        cd ~/tip
+        git submodule foreach git pull origin master \|\| true
+        git pull origin master
+    )
+}
+
 function dump-home-to-media() {
     DIR=/media/home/
     # echo "Resource: '$DIR' not available" && exit -1 || [ -e "$DIR" ]
