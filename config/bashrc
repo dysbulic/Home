@@ -186,7 +186,44 @@ alias e=emacs
 # Not set by OSX'S X server
 #[ -z "$DISPLAY" ] && export DISPLAY=":0"
 
-[ -z "$PS1" ] || (which fortune > /dev/null 2>&1 && fortune)
+[ ! -z "$INSTALL" ] && (
+    sudo aptitude install fortune libnotify-bin
+)
+[ -z "$PS1" ] || (
+    which fortune > /dev/null 2>&1 && (
+        fortune=$(fortune)
+        which notify-send > /dev/null 2>&1 && [ ! -z "$GUI" ] && (
+            notify-send -t 1000 -u low -i gtk-dialog-info "$fortune"
+        ) || (
+            setterm -underline on
+            echo "$fortune"
+            setterm -underline off
+        )
+    )
+)
+
+# From: http://www.cyberciti.biz/tips/spice-up-your-unix-linux-shell-scripts.html
+function openports() {
+    for port in {1..1023}; do
+        (echo >/dev/tcp/localhost/$port) >/dev/null 2>&1 && echo "$port open"
+    done
+}
+
+function sendhttpexample() {
+    exec 3<> /dev/tcp/${1:-will.dhappy.org}/80
+ 
+    printf "GET /~/config/bash HTTP/1.0\r\n" >&3
+    printf "Accept: text/html, text/plain\r\n" >&3
+    printf "Accept-Language: en\r\n" >&3
+    printf "User-Agent: bash_script v.%s\r\n" "${BASH_VERSION}" >&3
+    printf "\r\n" >&3
+    
+    while read LINE <&3; do
+        echo $LINE
+    done
+}
+
+# logger "$0 executed"
 
 # Include OSX specific pathes; and give them precedence
 for path in /usr/local/bin /opt/local/bin /opt/sfw/bin /sw/bin /usr/local/mysql/bin /usr/X11R6/bin; do
