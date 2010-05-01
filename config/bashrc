@@ -43,14 +43,6 @@ function publish() {
     git push $remote "$branch:refs/remotes/$(hostname -s)/$branch"
 }
 
-function tx() {
-    ( 
-        cd ~/tip
-        git commit -m checkpoint .
-        git submodule foreach git commit -m checkpoint . \|\| true
-    )
-}
-
 # Create git repository and mirror to webserver
 function addtoserver() {
     localdir=$(pwd)
@@ -67,11 +59,26 @@ function addtoserver() {
     git remote add webserver "ssh://wjholcomb@madstones.com/~/$remotedir/"
 }
 
+function tx() {
+    ( 
+        cd ~/tip
+        git commit -m checkpoint .
+        git submodule foreach git commit -m checkpoint . \|\| true
+    )
+}
 function pub() {
     (
         cd ~/tip
         git submodule foreach git push origin master \|\| true
         git push origin master
+    )
+}
+
+function sub() {
+    (
+        cd ~/tip
+        git submodule foreach git pull origin master \|\| true
+        git pull origin master
     )
 }
 
