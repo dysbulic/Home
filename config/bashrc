@@ -66,11 +66,15 @@ function tx() {
         git submodule foreach git commit -m checkpoint . \|\| true
     )
 }
+MIRROR[${#MIRROR[*]}]="origin"
+MIRROR[${#MIRROR[*]}]="web"
 function pub() {
     (
         cd ~/tip
-        git submodule foreach git push origin master \|\| true
-        git push origin master
+        for mirror in ${MIRROR[@]}; do
+            git submodule foreach git push "$mirror" master \|\| true
+            git push "$mirror" master
+        done
     )
 }
 
