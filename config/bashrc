@@ -72,6 +72,7 @@ function pub() {
     (
         cd ~/tip
         for mirror in ${MIRROR[@]}; do
+            echo "Publishing to: $mirror"
             git submodule foreach git push "$mirror" master \|\| true
             git push "$mirror" master
         done
