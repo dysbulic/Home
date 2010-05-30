@@ -53,7 +53,7 @@ function addtoserver() {
       git init
       echo "read oldrev newrev refname
         cd ..
-        env -i git merge \$refname" >> .git/hooks/post-receive
+        env -i git checkout -f >> .git/hooks/post-receive
       chmod a+x .git/hooks/post-receive'
     git init
     git remote add webserver "ssh://wjholcomb@madstones.com/~/$remotedir/"
