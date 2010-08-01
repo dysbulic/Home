@@ -33,16 +33,16 @@ export user="wjh"
 export REMOTE="wjholcomb@madstones.com"
 
 function dmprecord() {
-    dir="$(echo ~/tip/.../journal/)$(date +'%Y-%m-%d@%H:%m:%S')"
+    base="$(echo ~/tip/.../journal)"
+    dir="$base/$(date +'%Y-%m-%d@%H:%m:%S')"
     [ -e "$( ls -1 /media/*/FOLDER01/* | head -n1 )" ] && (
         mkdir -v "$dir"
         mv -v "/media/"*"/FOLDER01/"* "$dir"
-        [ -e "$( ls -1 $dir/*.[Ww][Aa][Vv] | head -n1 )" ] && (
-            for file in "$dir/*.[Ww][Aa][Vv]"; do
-                lame -h -V 8 "$file" "${file%.*}.mp3"
-            done
-            )
         )
+    for file in "$base"/*/*.[Ww][Aa][Vv]; do
+        mp3="${file%.*}.mp3"
+        [ -e "$mp3" ] || lame -h -V 8 "$file" "$mp3"
+    done
     rsync --recursive --progress --exclude .git ~/tip/.../journal $REMOTE:.../
 }
 
