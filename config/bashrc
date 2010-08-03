@@ -43,7 +43,7 @@ function dmprecord() {
         mp3="${file%.*}.mp3"
         [ -e "$mp3" ] || lame -h -V 8 "$file" "$mp3"
     done
-    rsync --recursive --progress --exclude .git ~/tip/.../journal $REMOTE:.../
+    rsync --recursive --progress --exclude .git --exclude *wav ~/tip/.../journal/ $REMOTE:.../journal/
 }
 
 # Push merges to webserver based on config at:
