@@ -193,6 +193,15 @@ export XMODIFIERS="@im=${XIM}"
 # Make bash append rather than overwrite the history on disk
 shopt -s histappend
 
+# Check the window size after each command and update LINES and COLUMNS.
+shopt -s checkwinsize
+
+# Includes filenames beginning with '.' in pathname expansion.
+shopt -s dotglob
+
+# ** matches one or more directories
+shopt -s globstar
+
 # Replace cd with p (pushd) and d (pushd^-1)
 # Put in Himinbiorg/shell
 alias p=pushd
