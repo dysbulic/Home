@@ -465,9 +465,11 @@ elif [ "${BASH_VERSINFO[5]/solaris/}" != "${BASH_VERSINFO[5]}" ]; then # in sola
     alias ls=dir
 elif [ "${BASH_VERSINFO[5]/cygwin/}" != "${BASH_VERSINFO[5]}" ]; then # in windows
     KEY=CurrentInstallFolder
-    WINDOWSSDK=$(reg query "HKLM\SOFTWARE\Microsoft\Microsoft SDKs\Windows" /v $KEY | grep $KEY | sed -e 's/.*REG_SZ[[:space:]]*//')
-    WINDOWSSDK=$(cygpath -p "$WINDOWSSDK\bin")
-    [ -e "$WINDOWSSDK" ] && PATH="$PATH:$WINDOWSSDK"
+    WINDOWSSDK=$(reg query "HKLM\SOFTWARE\Microsoft\Microsoft SDKs\Windows" /v $KEY 2> /dev/null | grep $KEY | sed -e 's/.*REG_SZ[[:space:]]*//')
+    if [ ! -z "$WINDOWSSDK" ]; then
+	WINDOWSSDK=$(cygpath -p "$WINDOWSSDK\bin")
+	[ -e "$WINDOWSSDK" ] && PATH="$PATH:$WINDOWSSDK"
+    fi
 
     # this fixes a problem with emacs not exiting properly
     # it will cause the terminal to break though if it is set here rather than in the global env
@@ -487,6 +489,9 @@ elif [ "${BASH_VERSINFO[5]/cygwin/}" != "${BASH_VERSINFO[5]}" ]; then # in windo
     export QTDIR=$(echo "/cygdrive/c/Qt/"*)
     [ -d "$QTDIR" ] && export PATH="$QTDIR/bin/:$PATH"
     which make.bat > /dev/null 2>&1 && alias make="make.bat"
+
+    sevenzipdir="$(cygpath "$ProgramW6432")/7-Zip"
+    [ -d "$sevenzipdir" ] && export PATH="$PATH:$sevenzipdir"
 
     alias dir="ls --color"
 else
