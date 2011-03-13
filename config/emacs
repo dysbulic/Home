@@ -9,6 +9,10 @@
 (global-set-key [delete] 'delete-char)
 (global-set-key [kp-delete] 'delete-char)
 
+;; store a longer command history
+(setq extended-command-history-max 50)
+(setq query-replace-history-max 50)
+
 ;; Turn on font-lock mode for Emacs
 (cond ((not running-xemacs)
 	(global-font-lock-mode t)))
@@ -136,6 +140,8 @@
                  (cons '("\\(xml\\|xsl\\|html\\|rng\\|xhtml\\|xslt\\|rml\\|docbook\\|svg\\|tmpl\\)" . nxml-mode)
                        auto-mode-alist))
            (message "nxml mode loaded")))
+
+(fset 'html-mode 'nxml-mode)
 
 (setq matlab-file ".../emacs.d/matlab.el")
 (if (file-exists-p matlab-file)
@@ -274,3 +280,5 @@
 
 ;; Now bind the delete line function to the F8 key
 ; (global-set-key [f8] 'nuke-line)
+
+(setq-default ispell-program-name "aspell")

@@ -481,6 +481,9 @@ elif [ "${BASH_VERSINFO[5]/cygwin/}" != "${BASH_VERSINFO[5]}" ]; then # in windo
     [ -d "$QTDIR" ] && export PATH="$QTDIR/bin/:$PATH"
     which make.bat > /dev/null 2>&1 && alias make="make.bat"
 
+    sevenzipdir="$(cygpath "$ProgramW6432")/7-Zip"
+    [ -d "$sevenzipdir" ] && export PATH="$PATH:$sevenzipdir"
+
     alias dir="ls --color"
 else
     alias ls="dir --color=auto"
