@@ -95,7 +95,7 @@
 (setq-default indent-tabs-mode nil)
 
 ;; conditionally set editing mode for javascript
-(setq javascript-file "~/.../lib/by/Karl Landstrom/karl.landstrom@brgeight.se/emacs/javascript.el")
+(setq javascript-file "~/.../lib/emacs/mode/javascript.el")
 (if (file-exists-p javascript-file)
     (progn (load javascript-file)
            (setq auto-mode-alist
