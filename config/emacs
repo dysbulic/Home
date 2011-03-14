@@ -40,6 +40,9 @@
 ;; Stop at the end of the file, not just add lines
 (setq next-line-add-newlines nil)
 
+;; Don't ask when following links
+(setq vc-follow-symlinks t)
+
 ;; Enable wheelmouse support by default
 (require 'mwheel)
 

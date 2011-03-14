@@ -428,13 +428,16 @@ function playmp3s() {
 
 export WEBSITE_DIR=~/sites
 
-[ -r "$WEBSITE_DIR/himinbi.org/odin/config/inputrc" ] && export INPUTRC="$WEBSITE_DIR/himinbi.org/odin/config/inputrc"
+[ -r ".../config/inputrc" ] && export INPUTRC=".../config/inputrc"
 
 XSLTTRANS="$WEBSITE_DIR/himinbi.org/odin/jars/XSLTTransformer.jar"
-[ -r "$XSLTTRANS" ] && which xsltproc > /dev/null 2>&1 || alias xsltproc="java -jar $XSLTTRANS"
+if [ -r "$XSLTTRANS" ]; then
+    which xsltproc > /dev/null 2>&1 || alias xsltproc="java -jar $XSLTTRANS"
+fi
 
 alias c="ssh wjholcomb@himinbi.org"
 alias c="ssh wjholcomb@madstones.com"
+alias connect_loki="ssh will@loki"
 alias connect_stderr="ssh will@stderr.org"
 alias connect_honors="ssh will@honors.tntech.edu"
 alias connect_home="ssh will@loki.himinbi.org"
