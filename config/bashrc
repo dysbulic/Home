@@ -47,6 +47,14 @@ function dmprecord() {
     rsync --recursive --progress --exclude .git --exclude *wav ~/tip/.../journal/ $REMOTE:.../journal/
 }
 
+# Verify a json file
+function json() {
+    for file in "$@"; do
+        echo "Checking: $file"
+        cat "$file" | python -mjson.tool
+    done
+}
+
 # Push merges to webserver based on config at:
 # http://hoenir.himinbi.org/2010/01/14/putting-sites-in-git/
 function publish() {
@@ -193,6 +201,15 @@ export XMODIFIERS="@im=${XIM}"
 
 # Make bash append rather than overwrite the history on disk
 shopt -s histappend
+
+# Check the window size after each command and update LINES and COLUMNS.
+shopt -s checkwinsize
+
+# Includes filenames beginning with '.' in pathname expansion.
+shopt -s dotglob
+
+# ** matches one or more directories
+shopt -s globstar
 
 # Replace cd with p (pushd) and d (pushd^-1)
 # Put in Himinbiorg/shell

@@ -102,11 +102,11 @@
 (setq-default indent-tabs-mode nil)
 
 ;; conditionally set editing mode for javascript
-(setq javascript-file "~/.../lib/by/Karl Landstrom/karl.landstrom@brgeight.se/emacs/javascript.el")
+(setq javascript-file "~/.../lib/emacs/mode/javascript.el")
 (if (file-exists-p javascript-file)
     (progn (load javascript-file)
            (setq auto-mode-alist
-                 (append '(("\\(\\.js\\|\\.jquery\\|\\.tipscript\\)$" . javascript-mode)) auto-mode-alist))
+                 (append '(("\\(js\\|jquery\\|json\\|mql\\|tipscript\\)$" . javascript-mode)) auto-mode-alist))
            (message "javascript mode loaded"))
   (setq auto-mode-alist
         (append '(("jquery|\\.js$" . c-mode)) auto-mode-alist)))
@@ -144,6 +144,7 @@
                        auto-mode-alist))
            (message "nxml mode loaded")))
 
+(fset 'xml-mode 'nxml-mode)
 (fset 'html-mode 'nxml-mode)
 
 (setq matlab-file ".../emacs.d/matlab.el")
